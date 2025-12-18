@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>英単語しりとり（アーケード）</title>
+  <style>
+    :root{
+      --bg0:#05060b;
+      --bg1:#070a12;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.09);
+      --line: rgba(255,255,255,.14);
+      --text:#e9eef7;
+      --muted: rgba(233,238,247,.70);
+
+      --neon1:#7c4dff;
+      --neon2:#00e5ff;
+      --neon3:#00ff8a;
+      --bad:#ff3d71;
+      --warn:#ffd166;
+
+      --r: 18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --shadow2: 0 0 24px rgba(0,229,255,.10);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Apple Color Emoji","Segoe UI Emoji";
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% 0%, rgba(124,77,255,.25), transparent 60%),
+        radial-gradient(900px 700px at 90% 10%, rgba(0,229,255,.18), transparent 55%),
+        radial-gradient(700px 600px at 60% 100%, rgba(0,255,138,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 60%, #04050a);
+      overflow-x:hidden;
+    }
+
+    /* うっすらスキャンライン */
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,.05) 0px,
+        rgba(255,255,255,.05) 1px,
+        transparent 3px,
+        transparent 6px
+      );
+      opacity:.12;
+      pointer-events:none;
+      mix-blend-mode: overlay;
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 28px auto 40px;
+      padding: 0 16px;
+    }
+
+    .hero{
+      background:
+        radial-gradient(900px 400px at 20% 20%, rgba(0,229,255,.18), transparent 60%),
+        radial-gradient(700px 300px at 80% 20%, rgba(124,77,255,.18), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid rgba(0,229,255,.12);
+      border-radius: calc(var(--r) + 10px);
+      padding: 18px 18px 14px;
+      box-shadow: var(--shadow), var(--shadow2);
+      backdrop-filter: blur(10px);
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size: 34px;
+      letter-spacing:.04em;
+      text-shadow: 0 0 10px rgba(0,229,255,.35), 0 0 18px rgba(124,77,255,.22);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .badge{
+      font-size: 14px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(0,229,255,.25);
+      background: rgba(0,0,0,.25);
+      box-shadow: 0 0 18px rgba(0,229,255,.10);
+      color: var(--muted);
+    }
+    .desc{
+      margin:0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+      h1{ font-size: 28px; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border: 1px solid rgba(0,229,255,.12);
+      border-radius: var(--r);
+      padding: 14px;
+      box-shadow: var(--shadow), var(--shadow2);
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+
+    .row{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .stat{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(0,229,255,.18);
+      background: rgba(0,0,0,.20);
+      box-shadow: 0 0 18px rgba(0,229,255,.08);
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .stat b{
+      color: var(--text);
+      font-size: 15px;
+      letter-spacing:.06em;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border:1px solid rgba(124,77,255,.22);
+      background: rgba(124,77,255,.12);
+      box-shadow: 0 0 16px rgba(124,77,255,.10);
+      min-width: 28px;
+      text-align:center;
+    }
+
+    .spacer{ flex:1; }
+
+    button{
+      cursor:pointer;
+      border-radius: 12px;
+      border:1px solid rgba(0,229,255,.25);
+      background: rgba(0,0,0,.25);
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 14px;
+      box-shadow: 0 0 0 1px rgba(124,77,255,.12), 0 0 18px rgba(0,229,255,.10);
+      transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    button:hover{
+      box-shadow: 0 0 0 1px rgba(0,229,255,.35), 0 0 26px rgba(0,229,255,.18), 0 0 18px rgba(124,77,255,.12);
+      transform: translateY(-1px);
+    }
+    button:active{ transform: translateY(0px) scale(.99); }
+    button.primary{
+      background: linear-gradient(180deg, rgba(0,229,255,.18), rgba(0,0,0,.25));
+    }
+    button.danger{
+      border-color: rgba(255,61,113,.35);
+      box-shadow: 0 0 0 1px rgba(255,61,113,.18), 0 0 18px rgba(255,61,113,.12);
+    }
+
+    .field{
+      margin-top: 12px;
+    }
+    label{
+      display:block;
+      font-weight: 650;
+      margin: 4px 0 8px;
+    }
+
+    .inputRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    input[type="text"]{
+      width: 100%;
+      padding: 14px 14px;
+      font-size: 16px;
+      border-radius: 12px;
+      border:1px solid rgba(0,229,255,.28);
+      background: rgba(0,0,0,.25);
+      color: var(--text);
+      box-shadow: 0 0 0 1px rgba(124,77,255,.10), 0 0 18px rgba(0,229,255,.10);
+      transition: box-shadow .12s ease, border-color .12s ease;
+    }
+    input[type="text"]::placeholder{ color: rgba(233,238,247,.45); }
+    input[type="text"]:focus{
+      outline:none;
+      box-shadow: 0 0 0 2px rgba(0,229,255,.22), 0 0 30px rgba(0,229,255,.18);
+    }
+
+    .subhint{
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .controls{
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(255,255,255,.12);
+    }
+
+    .seg{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(0,229,255,.18);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .seg .radio{
+      display:flex; align-items:center; gap:8px;
+    }
+    .seg input{ transform: translateY(1px); }
+
+    select{
+      border-radius: 999px;
+      border:1px solid rgba(0,229,255,.22);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      padding: 10px 12px;
+      box-shadow: 0 0 18px rgba(0,229,255,.08);
+    }
+
+    .msg{
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      min-height: 44px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .msg.good{ border-color: rgba(0,255,138,.25); color: rgba(0,255,138,.95); }
+    .msg.bad{ border-color: rgba(255,61,113,.30); color: rgba(255,61,113,.95); }
+    .msg.warn{ border-color: rgba(255,209,102,.35); color: rgba(255,209,102,.98); }
+
+    .log{
+      margin-top: 12px;
+      border-radius: 14px;
+      border:1px solid rgba(0,229,255,.12);
+      background: rgba(0,0,0,.22);
+      min-height: 220px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Noto Sans Mono", monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      overflow:auto;
+    }
+    .log .you{ color: rgba(0,229,255,.95); }
+    .log .cpu{ color: rgba(0,255,138,.95); }
+    .log .sys{ color: rgba(255,209,102,.98); }
+
+    .sideTitle{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+      margin: 2px 0 10px;
+    }
+    .sideTitle h2{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:.02em;
+      text-shadow: 0 0 10px rgba(0,229,255,.18);
+    }
+    .pillWrap{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(0,229,255,.18);
+      background: rgba(0,0,0,.18);
+      box-shadow: 0 0 18px rgba(0,229,255,.08);
+      font-size: 13px;
+      user-select:none;
+    }
+    .pill small{
+      color: rgba(233,238,247,.55);
+      font-size: 12px;
+    }
+    .pill.clickable{
+      cursor: pointer;
+      transition: transform .08s ease, box-shadow .12s ease;
+    }
+    .pill.clickable:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 0 24px rgba(0,229,255,.12);
+    }
+
+    .note{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      border-top: 1px dashed rgba(255,255,255,.12);
+      padding-top: 10px;
+    }
+
+    footer{
+      margin-top: 14px;
+      text-align:center;
+      color: rgba(233,238,247,.55);
+      font-size: 12px;
+    }
+
+    /* Arcade: success/fail anim */
+    .arcade-good{ animation: popGlow .25s ease-out 1; }
+    .arcade-bad{  animation: shake .18s ease-in-out 2; }
+    @keyframes popGlow{
+      from{ filter: brightness(1); }
+      to  { filter: brightness(1.35); }
+    }
+    @keyframes shake{
+      0%{ transform: translateX(0); }
+      25%{ transform: translateX(-5px); }
+      50%{ transform: translateX(5px); }
+      75%{ transform: translateX(-3px); }
+      100%{ transform: translateX(0); }
+    }
+    @media (prefers-reduced-motion: reduce){
+      *{ animation: none !important; transition: none !important; }
+      body::before{ display:none; }
+    }
+
+    /* Toast */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.72);
+      border: 1px solid rgba(0,229,255,.20);
+      border-radius: 999px;
+      padding: 10px 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.45), 0 0 18px rgba(0,229,255,.10);
+      color: var(--text);
+      font-size: 13px;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .12s ease, transform .12s ease;
+      max-width: min(92vw, 760px);
+      text-align:center;
+      z-index: 999;
+    }
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>英単語しりとり <span class="badge">GAME CENTER MODE 👾</span></h1>
+      <p class="desc">
+        入力欄に <b>a〜z（小文字）</b>で英単語を入れて、<b>Enter</b> または <b>送信</b>。次の単語は前の単語の<b>最後の文字</b>から始めます。迷ったら <b>ヒント</b>！
+      </p>
+    </div>
+
+    <div class="grid">
+      <div class="card" id="leftCard">
+        <div class="row" style="margin-bottom:10px;">
+          <div class="stat">次の頭文字 <b id="need">自由</b></div>
+          <div class="stat">ターン <b id="turns">0</b></div>
+          <div class="stat">連勝 <b id="streak">0</b></div>
+          <div class="spacer"></div>
+          <button class="danger" id="resetBtn" type="button" title="最初からやり直す">リセット</button>
+        </div>
+
+        <div class="field">
+          <label for="wordInput">あなたの単語</label>
+          <div class="inputRow">
+            <input id="wordInput" type="text" inputmode="text" autocomplete="off" spellcheck="false"
+                   placeholder="例： apple / school / egg" aria-label="英単語入力欄" />
+            <button class="primary" id="sendBtn" type="button">送信</button>
+            <button id="hintBtn" type="button">ヒント</button>
+          </div>
+          <p class="subhint">
+            モードは「厳格（辞書にある単語だけ）」と「ゆるめ（辞書になくてもOK＋候補表示）」を切り替えできます。
+          </p>
+
+          <div class="controls">
+            <div class="seg" role="group" aria-label="モード切替">
+              <span>モード：</span>
+              <label class="radio"><input type="radio" name="mode" value="strict" checked> 厳格</label>
+              <label class="radio"><input type="radio" name="mode" value="suggest"> ゆるめ</label>
+            </div>
+
+            <div class="seg" role="group" aria-label="コンピュータ強さ">
+              <span>コンピュータ：</span>
+              <select id="cpuLevel" aria-label="コンピュータの強さ">
+                <option value="easy">かんたん</option>
+                <option value="normal" selected>ふつう</option>
+                <option value="hard">むずかしい</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="msg" id="message" aria-live="polite"></div>
+          <div class="log" id="log" aria-live="polite" aria-label="履歴ログ"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sideTitle">
+          <h2>使った単語</h2>
+          <div class="pill"><small>ピル表示＝履歴</small></div>
+        </div>
+
+        <div class="pillWrap" id="usedPills" aria-label="使用済み単語一覧"></div>
+
+        <div class="pill" style="margin-top:10px;">
+          ミニ辞書語数 <b id="dictSize" style="margin-left:6px;">0</b>
+        </div>
+
+        <div class="note">
+          ※このゲームは<b>オフラインの小さな辞書</b>で動きます（ブラウザだけで完結）。<br/>
+          厳格モードでは<b>辞書にない単語はNG</b>。ゆるめモードでは<b>OK</b>にして、近い候補を表示します。
+          <div class="pillWrap" id="hintPills" style="margin-top:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      注意：小文字のみ／同じ単語は1回だけ／しりとりルール。楽しもう🙂
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script>
+    (function(){
+      "use strict";
+
+      const VOCAB = [
+        "apple","ant","animal","answer","art","actor","area",
+        "baby","back","bag","ball","band","bank","base","basket","beach","bear","beauty","because","bed","bee","begin","bird","birthday","black","blue","board","book","bottle","box","brain","bread","break","bridge","brother","brown","bus","busy","button",
+        "cake","camera","camp","candle","candy","capital","car","card","care","carry","cat","chair","change","chicken","child","chocolate","city","class","classroom","clean","clock","close","cloud","coach","coffee","color","comic","computer","cook","cookie","cool","copy","corner","country","course","cousin","crayon","culture","cup",
+        "dance","dark","day","desk","dictionary","dinner","dog","door","dream","drink","driver","drop",
+        "eagle","ear","earth","east","easy","eat","egg","eight","elephant","email","energy","engine","english","enjoy","entry","error","event","exam","example","exercise","exit","eye",
+        "face","family","fan","fast","father","favorite","feel","field","fight","film","find","fire","first","fish","five","flower","fly","food","forest","friend","frog","front","fruit","fun","future",
+        "game","garden","gate","gift","girl","glass","glove","goat","gold","good","grade","great","green","group","guitar",
+        "hair","half","hand","happy","hard","hat","head","health","help","hero","hill","history","home","homework","horse","hospital","hot","house","human",
+        "ice","idea","image","important","inside","internet",
+        "jacket","japan","job","join","juice",
+        "key","kid","kind","king","kitchen","kite",
+        "lake","language","last","late","laugh","leaf","learn","lesson","letter","library","light","like","line","lion","listen","live","long","look","love","lunch",
+        "machine","magazine","make","man","market","math","meal","meet","message","middle","milk","minute","model","money","month","morning","mouse","movie","music",
+        "name","nature","near","need","never","new","night","nine","noise","north","note","number",
+        "ocean","office","often","one","open","orange","order","outside",
+        "page","paint","paper","parent","park","party","pen","pencil","people","person","phone","photo","piano","picture","piece","pink","pizza","place","plan","play","player","please","point","police","popular","power","practice","present","problem","project",
+        "quiz",
+        "rain","read","ready","real","reason","red","remember","repeat","reply","report","rest","river","road","robot","room","rule","run",
+        "sad","safe","salad","school","science","score","sea","season","second","secret","see","send","sentence","share","ship","shoe","short","show","singer","sister","skill","sleep","small","smart","smile","snake","snow","soccer","sound","space","sport","spring","star","start","station","street","strong","student","study","summer","sun","super",
+        "table","taco","talk","teacher","team","test","text","thank","thing","think","three","time","today","together","tomorrow","train","travel","tree","true","try","tuesday","turn","two",
+        "umbrella","under","unit","use","user",
+        "vacation","video","village","voice",
+        "walk","wall","want","water","week","welcome","west","what","white","window","winter","with","woman","word","work","world","write",
+        "xray",
+        "year","yellow","yes","yesterday","young",
+        "zebra","zero","zoo"
+      ];
+
+      const input = document.getElementById("wordInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const hintBtn = document.getElementById("hintBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const needEl = document.getElementById("need");
+      const turnsEl = document.getElementById("turns");
+      const streakEl = document.getElementById("streak");
+      const msgEl = document.getElementById("message");
+      const logEl = document.getElementById("log");
+      const usedPills = document.getElementById("usedPills");
+      const hintPills = document.getElementById("hintPills");
+      const dictSizeEl = document.getElementById("dictSize");
+      const toastEl = document.getElementById("toast");
+      const cpuLevelEl = document.getElementById("cpuLevel");
+
+      const DICT = Array.from(new Set(VOCAB.map(w => w.toLowerCase()))).filter(w => /^[a-z]{2,}$/.test(w));
+      const DICT_SET = new Set(DICT);
+      dictSizeEl.textContent = String(DICT.length);
+
+      let used = new Set();
+      let need = "";
+      let turns = 0;
+      let streak = 0;
+      let alive = true;
+
+      function arcadeFlash(kind){
+        input.classList.remove("arcade-good","arcade-bad");
+        void input.offsetWidth;
+        input.classList.add(kind === "good" ? "arcade-good" : "arcade-bad");
+      }
+
+      function setMessage(text, tone=""){
+        msgEl.className = "msg" + (tone ? " " + tone : "");
+        msgEl.textContent = text;
+      }
+
+      let toastTimer = null;
+      function toast(text){
+        toastEl.textContent = text;
+        toastEl.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(()=> toastEl.classList.remove("show"), 1200);
+      }
+
+      function appendLog(line, cls="sys"){
+        const div = document.createElement("div");
+        div.className = cls;
+        div.textContent = line;
+        logEl.appendChild(div);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function renderUsedPills(){
+        usedPills.innerHTML = "";
+        for(const w of Array.from(used)){
+          const p = document.createElement("span");
+          p.className = "pill";
+          p.textContent = w;
+          usedPills.appendChild(p);
+        }
+      }
+
+      function renderHintPills(list){
+        hintPills.innerHTML = "";
+        if(!list || list.length === 0) return;
+        for(const w of list){
+          const p = document.createElement("span");
+          p.className = "pill clickable";
+          p.title = "クリックで入力欄に入れる";
+          p.innerHTML = `${w} <small>click</small>`;
+          p.addEventListener("click", ()=>{
+            input.value = w;
+            input.focus();
+          });
+          hintPills.appendChild(p);
+        }
+      }
+
+      function getMode(){
+        return document.querySelector('input[name="mode"]:checked')?.value || "strict";
+      }
+
+      function updateNeed(){
+        needEl.textContent = need ? need : "自由";
+      }
+      function updateStats(){
+        turnsEl.textContent = String(turns);
+        streakEl.textContent = String(streak);
+      }
+
+      function validate(word){
+        if(word.length === 0) return { ok:false, msg:"英単語を入力してね。", tone:"warn" };
+        if(!/^[a-z]+$/.test(word)) return { ok:false, msg:"小文字 a〜z だけで入力してね。", tone:"bad" };
+        if(word.length < 2) return { ok:false, msg:"2文字以上の単語で！", tone:"bad" };
+        if(used.has(word)) return { ok:false, msg:`「${word}」はもう使ったよ（重複禁止）`, tone:"bad" };
+        if(need && word[0] !== need) return { ok:false, msg:`ルール：次は「${need}」から！`, tone:"bad" };
+
+        const mode = getMode();
+        if(mode === "strict" && !DICT_SET.has(word)){
+          return { ok:false, msg:"ミニ辞書にない単語（厳格モード）。ヒントか「ゆるめ」へ。", tone:"warn" };
+        }
+
+        renderHintPills([]);
+        return { ok:true };
+      }
+
+      function possibleWords(startLetter){
+        return DICT.filter(w => !used.has(w) && (!startLetter || w[0] === startLetter));
+      }
+
+      function chooseCpuWord(startLetter){
+        const candidates = possibleWords(startLetter);
+        if(candidates.length === 0) return "";
+        const level = cpuLevelEl.value || "normal";
+
+        function opponentOptionsCount(myWord){
+          const next = myWord[myWord.length - 1];
+          return possibleWords(next).length;
+        }
+
+        if(level === "normal"){
+          return candidates[Math.floor(Math.random()*candidates.length)];
+        }
+
+        let best = candidates[0];
+        let bestScore = opponentOptionsCount(best);
+
+        for(const w of candidates){
+          const c = opponentOptionsCount(w);
+          if(level === "easy"){
+            if(c > bestScore){ best = w; bestScore = c; }
+          }else if(level === "hard"){
+            if(c < bestScore){ best = w; bestScore = c; }
+          }
+        }
+        return best;
+      }
+
+      function applyWord(by, word){
+        used.add(word);
+        renderUsedPills();
+        appendLog(by === "you" ? `You: ${word}` : `Computer: ${word}`, by === "you" ? "you" : "cpu");
+        need = word[word.length - 1];
+        updateNeed();
+      }
+
+      function win(){
+        alive = false;
+        setMessage("🎉 詰ませた！あなたの勝ち！", "good");
+        toast("あなたの勝ち！");
+      }
+
+      function cpuTurn(){
+        if(!alive) return;
+        const cpuWord = chooseCpuWord(need);
+        if(!cpuWord){
+          streak += 1;
+          updateStats();
+          win();
+          return;
+        }
+        applyWord("cpu", cpuWord);
+        if(possibleWords(need).length === 0){
+          alive = false;
+          setMessage("💥 返せる単語がない…あなたの負け！", "bad");
+          toast("負け…！");
+          streak = 0;
+          updateStats();
+        }
+      }
+
+      function userTurn(){
+        if(!alive) return;
+
+        const word = input.value.trim().toLowerCase();
+        input.value = "";
+
+        const v = validate(word);
+        if(!v.ok){
+          setMessage(v.msg, v.tone || "warn");
+          toast(v.msg);
+          arcadeFlash("bad");
+          input.focus();
+          return;
+        }
+
+        applyWord("you", word);
+        turns += 1;
+        updateStats();
+        setMessage(`OK！次は「${need}」から。`, "good");
+        toast("OK!");
+        arcadeFlash("good");
+        input.focus();
+
+        if(possibleWords(need).length === 0){
+          streak += 1;
+          updateStats();
+          win();
+          return;
+        }
+
+        setTimeout(cpuTurn, 220);
+      }
+
+      function showHints(){
+        if(!alive) return;
+        const list = possibleWords(need).slice(0, 5);
+        if(list.length === 0){
+          win();
+          return;
+        }
+        renderHintPills(list);
+        setMessage(`ヒント：${list.join(", ")}（クリックで入力できるよ）`, "warn");
+        toast("ヒント！");
+      }
+
+      function reset(){
+        used = new Set();
+        need = "";
+        turns = 0;
+        streak = 0;
+        alive = true;
+
+        logEl.innerHTML = "";
+        renderUsedPills();
+        renderHintPills([]);
+
+        updateNeed();
+        updateStats();
+        setMessage("スタート：英単語を入れてみよう（例：apple）", "warn");
+        appendLog("Start: 英単語を入力（例：apple）", "sys");
+        input.value = "";
+        input.focus();
+      }
+
+      sendBtn.addEventListener("click", userTurn);
+      hintBtn.addEventListener("click", showHints);
+      resetBtn.addEventListener("click", reset);
+
+      input.addEventListener("keydown", (e) => {
+        if(e.key === "Enter"){
+          e.preventDefault();
+          userTurn();
+        }
+      });
+
+      document.querySelectorAll('input[name="mode"]').forEach(r=>{
+        r.addEventListener("change", ()=>{
+          renderHintPills([]);
+          setMessage("モードを切り替えました。", "warn");
+          input.focus();
+        });
+      });
+
+      cpuLevelEl.addEventListener("change", ()=>{
+        toast("CPUレベル変更");
+        input.focus();
+      });
+
+      reset();
+    })();
+  </script>
+</body>
+</html>
